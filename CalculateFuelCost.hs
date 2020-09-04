@@ -9,7 +9,7 @@ import Data.Maybe
 import Data.List (stripPrefix, intercalate)
 import Data.Text (stripStart, pack, unpack)
 import Network.URI
-import Control.Monad (liftM, liftM2)
+import Control.Monad (liftM)
 import Text.JSON.Generic
 
 main = do
@@ -64,7 +64,7 @@ getToAddresses =
                 address <- getAddress "Enter a stop address or leave empty when finished:" True
                 case address of
                     "" -> return []
-                    a -> liftM2 (:) (return a) addresses
+                    a -> liftM (a :) addresses
 
 data Unit = MPG | KPL | LI | GA | Unknown
 
