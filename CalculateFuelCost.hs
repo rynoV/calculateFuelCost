@@ -3,14 +3,14 @@
 -- From: https://stackoverflow.com/questions/17844223/json-parsing-in-haskell
 {-# LANGUAGE DeriveDataTypeable #-}
 
-import Network.HTTP
-import System.IO
-import Data.Maybe
-import Data.List (stripPrefix, intercalate)
-import Data.Text (stripStart, pack, unpack)
-import Network.URI
-import Control.Monad (liftM)
-import Text.JSON.Generic
+import           Control.Monad     (liftM)
+import           Data.List         (intercalate, stripPrefix)
+import           Data.Maybe
+import           Data.Text         (pack, stripStart, unpack)
+import           Network.HTTP
+import           Network.URI
+import           System.IO
+import           Text.JSON.Generic
 
 main = do
         putStrLn $ "Enter your vehicle's fuel efficiency. Kilometers per litre ("
@@ -28,7 +28,7 @@ main = do
         fromAddr <- getAddress "Enter the start address" False
         toAddrs <- getToAddresses
         route <- getRoute fromAddr toAddrs
-        let cost = calcTripCost (distance route) kpl dpl 
+        let cost = calcTripCost (distance route) kpl dpl
         putStrLn $ "The gas cost of your trip with " ++ (show route) ++ " is estimated to cost: [currency] " ++ (show cost)
 
 calcTripCost :: Double -> UnitValue -> UnitValue -> Double
@@ -40,7 +40,7 @@ getAddress prompt allowEmpty =
     putStrLn prompt
     addr <- getLine
     if addr == "" && not allowEmpty
-        then 
+        then
             do
             putStrLn "Address must not be empty."
             getAddress prompt allowEmpty
@@ -60,11 +60,11 @@ getToAddresses =
     where
         addresses :: IO [String]
         addresses =
-                do 
+                do
                 address <- getAddress "Enter a stop address or leave empty when finished:" True
                 case address of
                     "" -> return []
-                    a -> liftM (a :) addresses
+                    a  -> liftM (a :) addresses
 
 data Unit = MPG | KPL | LI | GA | Unknown
 
@@ -72,10 +72,10 @@ type UnitVal = Double
 data UnitValue = UnitValue {value :: UnitVal, unit :: Unit}
 
 instance Show Unit where
-    show MPG = "mpg"
-    show KPL = "kpl"
-    show LI = "li"
-    show GA = "ga"
+    show MPG     = "mpg"
+    show KPL     = "kpl"
+    show LI      = "li"
+    show GA      = "ga"
     show Unknown = ""
 
 instance Read Unit where
@@ -84,26 +84,26 @@ instance Read Unit where
             tryParse :: [Unit] -> [(Unit, String)]
             tryParse (u:us) = case stripPrefix (show u) $ unpack $ stripStart $ pack value of
                                 Just rest -> [(u, rest)]
-                                Nothing -> tryParse us
+                                Nothing   -> tryParse us
             tryParse _ = []
 
 instance Show UnitValue where
     show UnitValue{value=v, unit=u} = show v ++ " " ++ show u
 
 instance Read UnitValue where
-    readsPrec _ value = 
+    readsPrec _ value =
         case getVal of
             Just (val, rest) -> [(UnitValue{value=val,unit=unit}, unitRest)]
                 where (unit,unitRest) = case (reads rest :: [(Unit,String)]) of
                                 (x:_) -> x
-                                _ -> (Unknown,rest)
+                                _     -> (Unknown,rest)
             Nothing -> []
-        where 
+        where
             getVal :: Maybe (UnitVal, String)
             getVal =
                 case (reads value :: [(UnitVal, String)]) of
                     (x:_) -> Just x
-                    _ -> Nothing
+                    _     -> Nothing
 
 oneUSGalInLi = 3.785412
 oneMiInKm = 1.609344
@@ -118,7 +118,7 @@ data Location = Location {
                     adminArea1 :: String,
                     adminArea3 :: String,
                     adminArea5 :: String,
-                    street :: String
+                    street     :: String
                 } deriving (Typeable, Data)
 data Route = Route {distance :: Double, locations :: [Location]} deriving (Typeable, Data)
 data DirectionsRes = DirectionsRes {route :: Route} deriving (Show, Typeable, Data)
@@ -139,7 +139,7 @@ instance Show Route where
 getRoute :: String -> [String] -> IO Route
 getRoute fromAddr toAddrs =
     do
-    result <- downloadURL $ getEndpointURI fromAddr toAddrs 
+    result <- downloadURL $ getEndpointURI fromAddr toAddrs
     -- Uncomment below and comment above to use saved response
     -- result <- liftM Right $ readFile "response.json"
     case result of
@@ -172,8 +172,7 @@ downloadURL url =
     do resp <- simpleHTTP $ getRequest $ show $ fromJust $ parseURI url
        case resp of
          Left x -> return $ Left ("Error connecting: " ++ show x)
-         Right r -> 
+         Right r ->
              case rspCode r of
                (2,_,_) -> return $ Right (rspBody r)
-               _ -> return $ Left (show r)
-
+               _       -> return $ Left (show r)
